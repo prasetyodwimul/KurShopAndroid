@@ -1,11 +1,13 @@
 package com.example.kurshop.ui.admin
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.kurshop.DetailTransaksiActivity
 import com.example.kurshop.R
 import com.example.kurshop.adapter.TransaksiAdminAdapter
 import com.example.kurshop.api.RetrofitClient
@@ -52,13 +54,17 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
                         rvTransaksiAdmin.adapter = TransaksiAdminAdapter(
                             listTransaksi = sortedData,
+
                             onUpdateStatus = { transaksi ->
                                 updateStatusTransaksi(transaksi)
+                            },
+
+                            onDetailTransaksi = { transaksi ->
+                                bukaDetailTransaksi(transaksi)
                             }
                         )
 
                     } else {
-
                         Toast.makeText(
                             requireContext(),
                             "Gagal mengambil transaksi",
@@ -78,6 +84,19 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     ).show()
                 }
             })
+    }
+
+    private fun bukaDetailTransaksi(transaksi: Transaksi) {
+        val intent = Intent(
+            requireContext(),
+            DetailTransaksiActivity::class.java
+        )
+
+        intent.putExtra("id_transaksi", transaksi.id)
+        intent.putExtra("status", transaksi.status)
+        intent.putExtra("total_harga", transaksi.total_harga)
+
+        startActivity(intent)
     }
 
     private fun updateStatusTransaksi(transaksi: Transaksi) {
@@ -143,7 +162,6 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     loadTransaksi()
 
                 } else {
-
                     Toast.makeText(
                         requireContext(),
                         "Gagal update status",
