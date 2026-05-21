@@ -145,9 +145,11 @@ class CheckoutActivity : AppCompatActivity() {
             Locale.getDefault()
         ).format(Date())
 
+        val totalHargaCheckout = CartSession.totalHarga()
+
         val transaksiRequest = TransaksiRequest(
             id_user = idUser,
-            total_harga = CartSession.totalHarga(),
+            total_harga = totalHargaCheckout,
             tanggal_transaksi = tanggalSekarang,
             status = "pending"
         )
@@ -164,7 +166,11 @@ class CheckoutActivity : AppCompatActivity() {
                         val transaksi = response.body()
 
                         if (transaksi != null) {
-                            simpanDetailTransaksi(transaksi.id)
+                            simpanDetailTransaksi(
+                                idTransaksi = transaksi.id,
+                                tanggalTransaksi = tanggalSekarang,
+                                totalHarga = totalHargaCheckout
+                            )
                         } else {
                             resetButton()
 
@@ -201,7 +207,11 @@ class CheckoutActivity : AppCompatActivity() {
             })
     }
 
-    private fun simpanDetailTransaksi(idTransaksi: Int) {
+    private fun simpanDetailTransaksi(
+        idTransaksi: Int,
+        tanggalTransaksi: String,
+        totalHarga: Int
+    ) {
         val cartItems = CartSession.cartItems.toList()
 
         if (cartItems.isEmpty()) {
@@ -233,7 +243,12 @@ class CheckoutActivity : AppCompatActivity() {
                             suksesCount++
 
                             if (suksesCount == cartItems.size) {
-                                kurangiStokProduk(cartItems)
+                                kurangiStokProduk(
+                                    idTransaksi = idTransaksi,
+                                    cartItems = cartItems,
+                                    tanggalTransaksi = tanggalTransaksi,
+                                    totalHarga = totalHarga
+                                )
                             }
 
                         } else {
@@ -267,7 +282,12 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    private fun kurangiStokProduk(cartItems: List<com.example.kurshop.model.CartItem>) {
+    private fun kurangiStokProduk(
+        idTransaksi: Int,
+        cartItems: List<com.example.kurshop.model.CartItem>,
+        tanggalTransaksi: String,
+        totalHarga: Int
+    ) {
         if (cartItems.isEmpty()) {
             resetButton()
             return
@@ -302,7 +322,11 @@ class CheckoutActivity : AppCompatActivity() {
                             suksesUpdateStok++
 
                             if (suksesUpdateStok == cartItems.size) {
-                                checkoutSelesai()
+                                checkoutSelesai(
+                                    idTransaksi = idTransaksi,
+                                    tanggalTransaksi = tanggalTransaksi,
+                                    totalHarga = totalHarga
+                                )
                             }
 
                         } else {
@@ -336,7 +360,11 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkoutSelesai() {
+    private fun checkoutSelesai(
+        idTransaksi: Int,
+        tanggalTransaksi: String,
+        totalHarga: Int
+    ) {
         Toast.makeText(
             this,
             "Checkout berhasil",
@@ -346,16 +374,17 @@ class CheckoutActivity : AppCompatActivity() {
         // Cart hanya dihapus setelah checkout berhasil
         CartSession.clearCart()
 
-        // Setelah checkout, langsung kembali ke User Dashboard
-        val sessionManager = SessionManager(this)
-
+        // Setelah checkout berhasil, masuk ke halaman struk / invoice
         val intent = Intent(
             this,
-            UserDashboardActivity::class.java
+            InvoiceActivity::class.java
         )
 
+        intent.putExtra("id_transaksi", idTransaksi)
         intent.putExtra("id_user", idUser)
-        intent.putExtra("nama_user", sessionManager.getNamaUser())
+        intent.putExtra("tanggal_transaksi", tanggalTransaksi)
+        intent.putExtra("status", "pending")
+        intent.putExtra("total_harga", totalHarga)
 
         intent.flags =
             Intent.FLAG_ACTIVITY_NEW_TASK or

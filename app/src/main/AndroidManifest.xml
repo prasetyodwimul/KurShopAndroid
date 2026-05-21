@@ -59,6 +59,10 @@
             android:name=".DetailProdukActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".InvoiceActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
