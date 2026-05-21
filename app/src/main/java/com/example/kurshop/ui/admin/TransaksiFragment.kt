@@ -14,6 +14,7 @@ import com.example.kurshop.api.RetrofitClient
 import com.example.kurshop.model.Transaksi
 import com.example.kurshop.model.TransaksiRequest
 import com.example.kurshop.model.TransaksiResponse
+import com.google.android.material.chip.ChipGroup
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -21,19 +22,48 @@ import retrofit2.Response
 class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
     private lateinit var rvTransaksiAdmin: RecyclerView
+    private lateinit var chipGroupStatus: ChipGroup
+
+    private var semuaTransaksi: List<Transaksi> = emptyList()
+    private var statusFilterAktif: String = "semua"
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         rvTransaksiAdmin = view.findViewById(R.id.rvTransaksiAdmin)
+        chipGroupStatus = view.findViewById(R.id.chipGroupStatus)
+
         rvTransaksiAdmin.layoutManager = LinearLayoutManager(requireContext())
 
+        setupFilterStatus()
         loadTransaksi()
     }
 
     override fun onResume() {
         super.onResume()
         loadTransaksi()
+    }
+
+    private fun setupFilterStatus() {
+        chipGroupStatus.setOnCheckedStateChangeListener { _, checkedIds ->
+
+            if (checkedIds.isEmpty()) {
+                statusFilterAktif = "semua"
+                tampilkanTransaksi()
+                return@setOnCheckedStateChangeListener
+            }
+
+            statusFilterAktif = when (checkedIds.first()) {
+                R.id.chipSemua -> "semua"
+                R.id.chipPending -> "pending"
+                R.id.chipDibayar -> "dibayar"
+                R.id.chipSelesai -> "selesai"
+                R.id.chipBatal -> "batal"
+                else -> "semua"
+            }
+
+            tampilkanTransaksi()
+        }
     }
 
     private fun loadTransaksi() {
@@ -46,23 +76,13 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 ) {
                     if (response.isSuccessful) {
 
-                        val data = response.body() ?: emptyList()
-
-                        val sortedData = data.sortedByDescending {
-                            it.id
-                        }
-
-                        rvTransaksiAdmin.adapter = TransaksiAdminAdapter(
-                            listTransaksi = sortedData,
-
-                            onUpdateStatus = { transaksi ->
-                                updateStatusTransaksi(transaksi)
-                            },
-
-                            onDetailTransaksi = { transaksi ->
-                                bukaDetailTransaksi(transaksi)
+                        semuaTransaksi = response.body()
+                            ?.sortedByDescending {
+                                it.id
                             }
-                        )
+                            ?: emptyList()
+
+                        tampilkanTransaksi()
 
                     } else {
                         Toast.makeText(
@@ -84,6 +104,28 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     ).show()
                 }
             })
+    }
+
+    private fun tampilkanTransaksi() {
+        val transaksiTampil = if (statusFilterAktif == "semua") {
+            semuaTransaksi
+        } else {
+            semuaTransaksi.filter {
+                it.status.lowercase().trim() == statusFilterAktif
+            }
+        }
+
+        rvTransaksiAdmin.adapter = TransaksiAdminAdapter(
+            listTransaksi = transaksiTampil,
+
+            onUpdateStatus = { transaksi ->
+                updateStatusTransaksi(transaksi)
+            },
+
+            onDetailTransaksi = { transaksi ->
+                bukaDetailTransaksi(transaksi)
+            }
+        )
     }
 
     private fun bukaDetailTransaksi(transaksi: Transaksi) {
