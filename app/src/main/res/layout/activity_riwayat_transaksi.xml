@@ -13,12 +13,23 @@
         android:background="#FF6F00"
         app:title="Riwayat Transaksi"
         app:titleTextColor="@android:color/white"
-        app:navigationIcon="@drawable/ic_launcher_foreground"/>
+        app:navigationIcon="@drawable/ic_launcher_foreground" />
+
+    <TextView
+        android:id="@+id/tvEmptyRiwayat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Belum ada riwayat transaksi"
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRiwayatTransaksi"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"/>
+        android:padding="8dp" />
 
 </LinearLayout>

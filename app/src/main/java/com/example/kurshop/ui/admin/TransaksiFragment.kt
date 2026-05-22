@@ -3,6 +3,7 @@ package com.example.kurshop.ui.admin
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +24,7 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
     private lateinit var rvTransaksiAdmin: RecyclerView
     private lateinit var chipGroupStatus: ChipGroup
+    private lateinit var tvEmptyTransaksiAdmin: TextView
 
     private var semuaTransaksi: List<Transaksi> = emptyList()
     private var statusFilterAktif: String = "semua"
@@ -32,6 +34,7 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
         rvTransaksiAdmin = view.findViewById(R.id.rvTransaksiAdmin)
         chipGroupStatus = view.findViewById(R.id.chipGroupStatus)
+        tvEmptyTransaksiAdmin = view.findViewById(R.id.tvEmptyTransaksiAdmin)
 
         rvTransaksiAdmin.layoutManager = LinearLayoutManager(requireContext())
 
@@ -113,6 +116,14 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
             semuaTransaksi.filter {
                 it.status.lowercase().trim() == statusFilterAktif
             }
+        }
+
+        if (transaksiTampil.isEmpty()) {
+            tvEmptyTransaksiAdmin.visibility = View.VISIBLE
+            rvTransaksiAdmin.visibility = View.GONE
+        } else {
+            tvEmptyTransaksiAdmin.visibility = View.GONE
+            rvTransaksiAdmin.visibility = View.VISIBLE
         }
 
         rvTransaksiAdmin.adapter = TransaksiAdminAdapter(

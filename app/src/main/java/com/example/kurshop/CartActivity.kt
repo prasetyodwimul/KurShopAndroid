@@ -2,17 +2,21 @@ package com.example.kurshop
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kurshop.adapter.CartAdapter
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 
 class CartActivity : AppCompatActivity() {
 
+    private lateinit var toolbar: MaterialToolbar
     private lateinit var rvCart: RecyclerView
+    private lateinit var tvEmptyCart: TextView
     private lateinit var tvSubtotal: TextView
     private lateinit var tvTotal: TextView
     private lateinit var btnCheckout: MaterialButton
@@ -23,39 +27,29 @@ class CartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cart)
 
-        // =========================
-        // AMBIL ID USER
-        // =========================
         idUser = intent.getIntExtra("id_user", 0)
 
-        // =========================
-        // INIT CART SESSION PER USER
-        // =========================
         if (idUser != 0) {
             CartSession.init(this, idUser)
         }
 
-        // =========================
-        // INIT VIEW
-        // =========================
+        toolbar = findViewById(R.id.toolbar)
         rvCart = findViewById(R.id.rvCart)
+        tvEmptyCart = findViewById(R.id.tvEmptyCart)
         tvSubtotal = findViewById(R.id.tvSubtotal)
         tvTotal = findViewById(R.id.tvTotal)
         btnCheckout = findViewById(R.id.btnCheckout)
 
-        // =========================
-        // RECYCLER VIEW
-        // =========================
+        setSupportActionBar(toolbar)
+
+        toolbar.setNavigationOnClickListener {
+            finish()
+        }
+
         rvCart.layoutManager = LinearLayoutManager(this)
 
-        // =========================
-        // TAMPILKAN CART
-        // =========================
         tampilkanCart()
 
-        // =========================
-        // CHECKOUT
-        // =========================
         btnCheckout.setOnClickListener {
             if (CartSession.cartItems.isEmpty()) {
 
@@ -124,5 +118,17 @@ class CartActivity : AppCompatActivity() {
 
         tvSubtotal.text = "Rp ${formatRupiah(total)}"
         tvTotal.text = "Rp ${formatRupiah(total)}"
+
+        if (CartSession.cartItems.isEmpty()) {
+            tvEmptyCart.visibility = View.VISIBLE
+            rvCart.visibility = View.GONE
+            btnCheckout.isEnabled = false
+            btnCheckout.alpha = 0.5f
+        } else {
+            tvEmptyCart.visibility = View.GONE
+            rvCart.visibility = View.VISIBLE
+            btnCheckout.isEnabled = true
+            btnCheckout.alpha = 1f
+        }
     }
 }

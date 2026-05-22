@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.TypedValue
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -29,6 +30,7 @@ class UserDashboardActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var tvSambutan: TextView
+    private lateinit var tvEmptyProduk: TextView
     private lateinit var etSearch: TextInputEditText
     private lateinit var llKategori: LinearLayout
     private lateinit var rvProduk: RecyclerView
@@ -66,6 +68,7 @@ class UserDashboardActivity : AppCompatActivity() {
 
         toolbar = findViewById(R.id.toolbar)
         tvSambutan = findViewById(R.id.tvSambutan)
+        tvEmptyProduk = findViewById(R.id.tvEmptyProduk)
         etSearch = findViewById(R.id.etSearch)
         llKategori = findViewById(R.id.llKategori)
         rvProduk = findViewById(R.id.rvProduk)
@@ -371,6 +374,14 @@ class UserDashboardActivity : AppCompatActivity() {
                 bukaDetailProduk(produk)
             }
         )
+
+        if (filteredList.isEmpty()) {
+            tvEmptyProduk.visibility = View.VISIBLE
+            rvProduk.visibility = View.GONE
+        } else {
+            tvEmptyProduk.visibility = View.GONE
+            rvProduk.visibility = View.VISIBLE
+        }
     }
 
     private fun tambahKeKeranjang(produk: Produk) {

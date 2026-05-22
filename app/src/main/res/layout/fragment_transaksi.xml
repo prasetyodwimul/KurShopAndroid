@@ -31,7 +31,7 @@
                 android:layout_height="wrap_content"
                 android:text="Semua"
                 android:checked="true"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipPending"
@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Pending"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipDibayar"
@@ -47,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Dibayar"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSelesai"
@@ -55,7 +55,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Selesai"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipBatal"
@@ -63,11 +63,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Batal"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="8dp" />
 
         </com.google.android.material.chip.ChipGroup>
 
     </HorizontalScrollView>
+
+    <!-- Empty State Admin Transaksi -->
+    <TextView
+        android:id="@+id/tvEmptyTransaksiAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tidak ada transaksi pada filter ini"
+        android:textSize="14sp"
+        android:textColor="#757575"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone" />
 
     <!-- RecyclerView Transaksi -->
     <androidx.recyclerview.widget.RecyclerView
@@ -75,6 +87,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp"/>
+        android:padding="8dp" />
 
 </LinearLayout>

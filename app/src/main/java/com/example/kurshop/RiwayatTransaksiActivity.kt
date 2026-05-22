@@ -3,6 +3,8 @@ package com.example.kurshop
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +25,7 @@ import retrofit2.Response
 class RiwayatTransaksiActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var tvEmptyRiwayat: TextView
     private lateinit var rvRiwayatTransaksi: RecyclerView
 
     private var idUser: Int = 0
@@ -35,6 +38,7 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
         idUser = intent.getIntExtra("id_user", 0)
 
         toolbar = findViewById(R.id.toolbar)
+        tvEmptyRiwayat = findViewById(R.id.tvEmptyRiwayat)
         rvRiwayatTransaksi = findViewById(R.id.rvRiwayatTransaksi)
 
         setSupportActionBar(toolbar)
@@ -71,6 +75,14 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                             .sortedByDescending {
                                 it.id
                             }
+
+                        if (transaksiUser.isEmpty()) {
+                            tvEmptyRiwayat.visibility = View.VISIBLE
+                            rvRiwayatTransaksi.visibility = View.GONE
+                        } else {
+                            tvEmptyRiwayat.visibility = View.GONE
+                            rvRiwayatTransaksi.visibility = View.VISIBLE
+                        }
 
                         rvRiwayatTransaksi.adapter =
                             RiwayatTransaksiAdapter(
