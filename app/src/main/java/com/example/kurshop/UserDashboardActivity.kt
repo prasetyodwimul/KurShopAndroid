@@ -77,6 +77,8 @@ class UserDashboardActivity : AppCompatActivity() {
 
         rvProduk.layoutManager = GridLayoutManager(this, 2)
 
+        updateBadgeKeranjang()
+
         setupSearch()
         loadKategori()
         loadProduk()
@@ -100,6 +102,7 @@ class UserDashboardActivity : AppCompatActivity() {
             CartSession.init(this, idUser)
         }
 
+        updateBadgeKeranjang()
         loadProduk()
     }
 
@@ -374,11 +377,15 @@ class UserDashboardActivity : AppCompatActivity() {
         val berhasil = CartSession.tambahProduk(produk)
 
         if (berhasil) {
+
+            updateBadgeKeranjang()
+
             Toast.makeText(
                 this,
                 "${produk.nama} ditambahkan ke keranjang",
                 Toast.LENGTH_SHORT
             ).show()
+
         } else {
             Toast.makeText(
                 this,
@@ -419,5 +426,15 @@ class UserDashboardActivity : AppCompatActivity() {
 
         startActivity(intent)
         finish()
+    }
+
+    private fun updateBadgeKeranjang() {
+        val totalItem = CartSession.totalItem()
+
+        fabCart.text = if (totalItem > 0) {
+            "Keranjang ($totalItem)"
+        } else {
+            "Keranjang"
+        }
     }
 }
