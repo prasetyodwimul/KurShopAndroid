@@ -58,7 +58,6 @@ class ProdukAdminAdapter(
         holder.tvNamaProduk.text = produk.nama
         holder.tvDeskripsi.text = produk.deskripsi
         holder.tvHarga.text = "Rp\u00A0${formatRupiah(produk.harga)}"
-        holder.tvStok.text = "Stok: ${produk.stok}"
 
         holder.chipKategori.text = when (produk.id_kategori) {
             1 -> "Makanan"
@@ -66,6 +65,26 @@ class ProdukAdminAdapter(
             3 -> "Snack"
             4 -> "Dessert"
             else -> "Lainnya"
+        }
+
+        // =========================
+        // STATUS STOK ADMIN
+        // =========================
+        when {
+            produk.stok <= 0 -> {
+                holder.tvStok.text = "Stok: Habis"
+                holder.tvStok.setTextColor(Color.parseColor("#D32F2F"))
+            }
+
+            produk.stok <= 5 -> {
+                holder.tvStok.text = "Stok: ${produk.stok} • Menipis"
+                holder.tvStok.setTextColor(Color.parseColor("#F57C00"))
+            }
+
+            else -> {
+                holder.tvStok.text = "Stok: ${produk.stok}"
+                holder.tvStok.setTextColor(Color.parseColor("#9E9E9E"))
+            }
         }
 
         // =========================
@@ -119,6 +138,7 @@ class ProdukAdminAdapter(
         holder.btnTambahCart.text = "Edit"
         holder.btnTambahCart.isEnabled = true
         holder.btnTambahCart.alpha = 1f
+        holder.btnTambahCart.setBackgroundColor(Color.parseColor("#FF6F00"))
 
         holder.btnTambahCart.setOnClickListener {
             onEditProduk(produk)
