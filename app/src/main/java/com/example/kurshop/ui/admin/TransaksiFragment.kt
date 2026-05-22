@@ -3,6 +3,7 @@ package com.example.kurshop.ui.admin
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -19,12 +20,16 @@ import com.google.android.material.chip.ChipGroup
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.NumberFormat
+import java.util.Locale
 
 class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
     private lateinit var rvTransaksiAdmin: RecyclerView
     private lateinit var chipGroupStatus: ChipGroup
     private lateinit var tvEmptyTransaksiAdmin: TextView
+    private lateinit var tvTotalPendapatanTransaksi: TextView
+    private lateinit var layoutLoadingTransaksiAdmin: LinearLayout
 
     private var semuaTransaksi: List<Transaksi> = emptyList()
     private var statusFilterAktif: String = "semua"
@@ -35,6 +40,8 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
         rvTransaksiAdmin = view.findViewById(R.id.rvTransaksiAdmin)
         chipGroupStatus = view.findViewById(R.id.chipGroupStatus)
         tvEmptyTransaksiAdmin = view.findViewById(R.id.tvEmptyTransaksiAdmin)
+        tvTotalPendapatanTransaksi = view.findViewById(R.id.tvTotalPendapatanTransaksi)
+        layoutLoadingTransaksiAdmin = view.findViewById(R.id.layoutLoadingTransaksiAdmin)
 
         rvTransaksiAdmin.layoutManager = LinearLayoutManager(requireContext())
 
@@ -70,6 +77,8 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
     }
 
     private fun loadTransaksi() {
+        tampilkanLoading(true)
+
         RetrofitClient.instance.getTransaksi()
             .enqueue(object : Callback<List<Transaksi>> {
 
@@ -77,6 +86,10 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     call: Call<List<Transaksi>>,
                     response: Response<List<Transaksi>>
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     if (response.isSuccessful) {
 
                         semuaTransaksi = response.body()
@@ -85,6 +98,7 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                             }
                             ?: emptyList()
 
+                        updateTotalPendapatan()
                         tampilkanTransaksi()
 
                     } else {
@@ -100,6 +114,10 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     call: Call<List<Transaksi>>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -107,6 +125,12 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     ).show()
                 }
             })
+    }
+
+    private fun tampilkanLoading(sedangLoading: Boolean) {
+        layoutLoadingTransaksiAdmin.visibility = if (sedangLoading) View.VISIBLE else View.GONE
+        rvTransaksiAdmin.visibility = if (sedangLoading) View.GONE else View.VISIBLE
+        tvEmptyTransaksiAdmin.visibility = View.GONE
     }
 
     private fun tampilkanTransaksi() {
@@ -137,6 +161,23 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 bukaDetailTransaksi(transaksi)
             }
         )
+    }
+
+    private fun updateTotalPendapatan() {
+        val totalPendapatan = semuaTransaksi
+            .filter {
+                it.status.lowercase().trim() == "selesai"
+            }
+            .sumOf {
+                it.total_harga.toLong()
+            }
+
+        tvTotalPendapatanTransaksi.text = formatRupiah(totalPendapatan)
+    }
+
+    private fun formatRupiah(jumlah: Long): String {
+        val formatIndonesia = NumberFormat.getNumberInstance(Locale("id", "ID"))
+        return "Rp ${formatIndonesia.format(jumlah)}"
     }
 
     private fun bukaDetailTransaksi(transaksi: Transaksi) {
@@ -204,6 +245,8 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 call: Call<TransaksiResponse>,
                 response: Response<TransaksiResponse>
             ) {
+                if (!isAdded) return
+
                 if (response.isSuccessful) {
 
                     Toast.makeText(
@@ -227,6 +270,8 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 call: Call<TransaksiResponse>,
                 t: Throwable
             ) {
+                if (!isAdded) return
+
                 Toast.makeText(
                     requireContext(),
                     "Error: ${t.message}",

@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -20,11 +21,14 @@ import retrofit2.Response
 class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
 
     private lateinit var rvProdukAdmin: RecyclerView
+    private lateinit var layoutLoadingProdukAdmin: LinearLayout
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         rvProdukAdmin = view.findViewById(R.id.rvProdukAdmin)
+        layoutLoadingProdukAdmin = view.findViewById(R.id.layoutLoadingProdukAdmin)
+
         rvProdukAdmin.layoutManager = GridLayoutManager(requireContext(), 2)
 
         loadProduk()
@@ -36,6 +40,8 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
     }
 
     private fun loadProduk() {
+        tampilkanLoading(true)
+
         RetrofitClient.instance.getProduk()
             .enqueue(object : Callback<List<Produk>> {
 
@@ -43,6 +49,10 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     response: Response<List<Produk>>
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     if (response.isSuccessful) {
                         val data = response.body() ?: emptyList()
 
@@ -69,6 +79,10 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -76,6 +90,11 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     ).show()
                 }
             })
+    }
+
+    private fun tampilkanLoading(sedangLoading: Boolean) {
+        layoutLoadingProdukAdmin.visibility = if (sedangLoading) View.VISIBLE else View.GONE
+        rvProdukAdmin.visibility = if (sedangLoading) View.GONE else View.VISIBLE
     }
 
     private fun bukaEditProduk(produk: Produk) {
@@ -112,6 +131,8 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<Void>,
                     response: Response<Void>
                 ) {
+                    if (!isAdded) return
+
                     if (response.isSuccessful) {
                         Toast.makeText(
                             requireContext(),
@@ -134,6 +155,8 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<Void>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",

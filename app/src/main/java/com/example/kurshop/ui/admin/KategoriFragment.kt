@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +24,7 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
     private lateinit var etNamaKategori: EditText
     private lateinit var btnTambahKategori: MaterialButton
     private lateinit var rvKategoriAdmin: RecyclerView
+    private lateinit var layoutLoadingKategoriAdmin: LinearLayout
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -30,6 +32,7 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
         etNamaKategori = view.findViewById(R.id.etNamaKategori)
         btnTambahKategori = view.findViewById(R.id.btnTambahKategori)
         rvKategoriAdmin = view.findViewById(R.id.rvKategoriAdmin)
+        layoutLoadingKategoriAdmin = view.findViewById(R.id.layoutLoadingKategoriAdmin)
 
         rvKategoriAdmin.layoutManager = LinearLayoutManager(requireContext())
 
@@ -46,6 +49,8 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
     }
 
     private fun loadKategori() {
+        tampilkanLoading(true)
+
         RetrofitClient.instance.getKategori()
             .enqueue(object : Callback<List<Kategori>> {
 
@@ -53,6 +58,10 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<List<Kategori>>,
                     response: Response<List<Kategori>>
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     if (response.isSuccessful) {
                         val data = response.body() ?: emptyList()
 
@@ -73,6 +82,10 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<List<Kategori>>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
+                    tampilkanLoading(false)
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -80,6 +93,13 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     ).show()
                 }
             })
+    }
+
+    private fun tampilkanLoading(sedangLoading: Boolean) {
+        layoutLoadingKategoriAdmin.visibility = if (sedangLoading) View.VISIBLE else View.GONE
+        rvKategoriAdmin.visibility = if (sedangLoading) View.GONE else View.VISIBLE
+        btnTambahKategori.isEnabled = !sedangLoading
+        etNamaKategori.isEnabled = !sedangLoading
     }
 
     private fun tambahKategori() {
@@ -102,6 +122,8 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<Kategori>,
                     response: Response<Kategori>
                 ) {
+                    if (!isAdded) return
+
                     if (response.isSuccessful) {
                         Toast.makeText(
                             requireContext(),
@@ -125,6 +147,8 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<Kategori>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -153,6 +177,8 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<Void>,
                     response: Response<Void>
                 ) {
+                    if (!isAdded) return
+
                     if (response.isSuccessful) {
                         Toast.makeText(
                             requireContext(),
@@ -175,6 +201,8 @@ class KategoriFragment : Fragment(R.layout.fragment_kategori) {
                     call: Call<Void>,
                     t: Throwable
                 ) {
+                    if (!isAdded) return
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",

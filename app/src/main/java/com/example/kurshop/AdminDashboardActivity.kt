@@ -21,6 +21,8 @@ import com.google.android.material.tabs.TabLayoutMediator
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.NumberFormat
+import java.util.Locale
 
 class AdminDashboardActivity : AppCompatActivity() {
 
@@ -32,6 +34,7 @@ class AdminDashboardActivity : AppCompatActivity() {
     private lateinit var tvJumlahProduk: TextView
     private lateinit var tvJumlahTransaksi: TextView
     private lateinit var tvJumlahUser: TextView
+    private lateinit var tvTotalPendapatan: TextView
 
     private lateinit var sessionManager: SessionManager
 
@@ -49,6 +52,7 @@ class AdminDashboardActivity : AppCompatActivity() {
         tvJumlahProduk = findViewById(R.id.tvJumlahProduk)
         tvJumlahTransaksi = findViewById(R.id.tvJumlahTransaksi)
         tvJumlahUser = findViewById(R.id.tvJumlahUser)
+        tvTotalPendapatan = findViewById(R.id.tvTotalPendapatan)
 
         setupToolbarAmanDariNotch()
         setupViewPager()
@@ -218,10 +222,21 @@ class AdminDashboardActivity : AppCompatActivity() {
                     response: Response<List<Transaksi>>
                 ) {
                     if (response.isSuccessful) {
-                        val jumlah = response.body()?.size ?: 0
+                        val data = response.body() ?: emptyList()
+                        val jumlah = data.size
+                        val totalPendapatan = data
+                            .filter {
+                                it.status.lowercase().trim() == "selesai"
+                            }
+                            .sumOf {
+                                it.total_harga.toLong()
+                            }
+
                         tvJumlahTransaksi.text = jumlah.toString()
+                        tvTotalPendapatan.text = formatRupiah(totalPendapatan)
                     } else {
                         tvJumlahTransaksi.text = "0"
+                        tvTotalPendapatan.text = formatRupiah(0L)
                     }
                 }
 
@@ -230,8 +245,14 @@ class AdminDashboardActivity : AppCompatActivity() {
                     t: Throwable
                 ) {
                     tvJumlahTransaksi.text = "0"
+                    tvTotalPendapatan.text = formatRupiah(0L)
                 }
             })
+    }
+
+    private fun formatRupiah(jumlah: Long): String {
+        val formatIndonesia = NumberFormat.getNumberInstance(Locale("id", "ID"))
+        return "Rp ${formatIndonesia.format(jumlah)}"
     }
 
     private fun loadJumlahUser() {
