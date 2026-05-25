@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -25,6 +26,7 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
 
     private lateinit var etSearchProdukAdmin: TextInputEditText
     private lateinit var tvEmptyProdukAdmin: TextView
+    private lateinit var progressProdukAdmin: ProgressBar
     private lateinit var rvProdukAdmin: RecyclerView
 
     private var fullListProduk: List<Produk> = emptyList()
@@ -37,6 +39,7 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
 
         etSearchProdukAdmin = view.findViewById(R.id.etSearchProdukAdmin)
         tvEmptyProdukAdmin = view.findViewById(R.id.tvEmptyProdukAdmin)
+        progressProdukAdmin = view.findViewById(R.id.progressProdukAdmin)
         rvProdukAdmin = view.findViewById(R.id.rvProdukAdmin)
 
         rvProdukAdmin.layoutManager = GridLayoutManager(requireContext(), 2)
@@ -77,6 +80,8 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
     }
 
     private fun loadProduk() {
+        showLoadingProdukAdmin(true)
+
         RetrofitClient.instance.getProduk()
             .enqueue(object : Callback<List<Produk>> {
 
@@ -84,6 +89,8 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     response: Response<List<Produk>>
                 ) {
+                    showLoadingProdukAdmin(false)
+
                     if (response.isSuccessful) {
 
                         fullListProduk = response.body()
@@ -95,6 +102,10 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                         applyFilterProduk()
 
                     } else {
+
+                        fullListProduk = emptyList()
+                        applyFilterProduk()
+
                         Toast.makeText(
                             requireContext(),
                             "Gagal mengambil produk",
@@ -107,6 +118,11 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     t: Throwable
                 ) {
+                    showLoadingProdukAdmin(false)
+
+                    fullListProduk = emptyList()
+                    applyFilterProduk()
+
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -114,6 +130,16 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     ).show()
                 }
             })
+    }
+
+    private fun showLoadingProdukAdmin(isLoading: Boolean) {
+        if (isLoading) {
+            progressProdukAdmin.visibility = View.VISIBLE
+            rvProdukAdmin.visibility = View.GONE
+            tvEmptyProdukAdmin.visibility = View.GONE
+        } else {
+            progressProdukAdmin.visibility = View.GONE
+        }
     }
 
     private fun applyFilterProduk() {

@@ -6,6 +6,7 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
+    <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -15,6 +16,17 @@
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_launcher_foreground" />
 
+    <!-- Loading Riwayat -->
+    <ProgressBar
+        android:id="@+id/progressRiwayat"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone" />
+
+    <!-- Empty State Riwayat -->
     <TextView
         android:id="@+id/tvEmptyRiwayat"
         android:layout_width="match_parent"
@@ -26,10 +38,12 @@
         android:padding="24dp"
         android:visibility="gone" />
 
+    <!-- RecyclerView Riwayat -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRiwayatTransaksi"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:padding="8dp" />
 
 </LinearLayout>

@@ -13,6 +13,7 @@ import com.example.kurshop.DetailTransaksiActivity
 import com.example.kurshop.R
 import com.example.kurshop.adapter.TransaksiAdminAdapter
 import com.example.kurshop.api.RetrofitClient
+import com.example.kurshop.formatRupiah
 import com.example.kurshop.model.Transaksi
 import com.example.kurshop.model.TransaksiRequest
 import com.example.kurshop.model.TransaksiResponse
@@ -20,8 +21,6 @@ import com.google.android.material.chip.ChipGroup
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.text.NumberFormat
-import java.util.Locale
 
 class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
 
@@ -77,7 +76,7 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
     }
 
     private fun loadTransaksi() {
-        tampilkanLoading(true)
+        showLoadingTransaksi(true)
 
         RetrofitClient.instance.getTransaksi()
             .enqueue(object : Callback<List<Transaksi>> {
@@ -86,9 +85,7 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     call: Call<List<Transaksi>>,
                     response: Response<List<Transaksi>>
                 ) {
-                    if (!isAdded) return
-
-                    tampilkanLoading(false)
+                    showLoadingTransaksi(false)
 
                     if (response.isSuccessful) {
 
@@ -98,10 +95,14 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                             }
                             ?: emptyList()
 
-                        updateTotalPendapatan()
+                        hitungTotalPendapatan()
                         tampilkanTransaksi()
 
                     } else {
+                        semuaTransaksi = emptyList()
+                        hitungTotalPendapatan()
+                        tampilkanTransaksi()
+
                         Toast.makeText(
                             requireContext(),
                             "Gagal mengambil transaksi",
@@ -114,9 +115,11 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                     call: Call<List<Transaksi>>,
                     t: Throwable
                 ) {
-                    if (!isAdded) return
+                    showLoadingTransaksi(false)
 
-                    tampilkanLoading(false)
+                    semuaTransaksi = emptyList()
+                    hitungTotalPendapatan()
+                    tampilkanTransaksi()
 
                     Toast.makeText(
                         requireContext(),
@@ -127,10 +130,27 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
             })
     }
 
-    private fun tampilkanLoading(sedangLoading: Boolean) {
-        layoutLoadingTransaksiAdmin.visibility = if (sedangLoading) View.VISIBLE else View.GONE
-        rvTransaksiAdmin.visibility = if (sedangLoading) View.GONE else View.VISIBLE
-        tvEmptyTransaksiAdmin.visibility = View.GONE
+    private fun showLoadingTransaksi(isLoading: Boolean) {
+        if (isLoading) {
+            layoutLoadingTransaksiAdmin.visibility = View.VISIBLE
+            rvTransaksiAdmin.visibility = View.GONE
+            tvEmptyTransaksiAdmin.visibility = View.GONE
+        } else {
+            layoutLoadingTransaksiAdmin.visibility = View.GONE
+        }
+    }
+
+    private fun hitungTotalPendapatan() {
+        val totalPendapatan = semuaTransaksi
+            .filter {
+                it.status.lowercase().trim() == "selesai"
+            }
+            .sumOf {
+                it.total_harga
+            }
+
+        tvTotalPendapatanTransaksi.text =
+            "Rp ${formatRupiah(totalPendapatan)}"
     }
 
     private fun tampilkanTransaksi() {
@@ -161,23 +181,6 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 bukaDetailTransaksi(transaksi)
             }
         )
-    }
-
-    private fun updateTotalPendapatan() {
-        val totalPendapatan = semuaTransaksi
-            .filter {
-                it.status.lowercase().trim() == "selesai"
-            }
-            .sumOf {
-                it.total_harga.toLong()
-            }
-
-        tvTotalPendapatanTransaksi.text = formatRupiah(totalPendapatan)
-    }
-
-    private fun formatRupiah(jumlah: Long): String {
-        val formatIndonesia = NumberFormat.getNumberInstance(Locale("id", "ID"))
-        return "Rp ${formatIndonesia.format(jumlah)}"
     }
 
     private fun bukaDetailTransaksi(transaksi: Transaksi) {
@@ -245,8 +248,6 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 call: Call<TransaksiResponse>,
                 response: Response<TransaksiResponse>
             ) {
-                if (!isAdded) return
-
                 if (response.isSuccessful) {
 
                     Toast.makeText(
@@ -270,8 +271,6 @@ class TransaksiFragment : Fragment(R.layout.fragment_transaksi) {
                 call: Call<TransaksiResponse>,
                 t: Throwable
             ) {
-                if (!isAdded) return
-
                 Toast.makeText(
                     requireContext(),
                     "Error: ${t.message}",

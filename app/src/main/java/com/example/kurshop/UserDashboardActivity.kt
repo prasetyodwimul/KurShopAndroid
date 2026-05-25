@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +32,7 @@ class UserDashboardActivity : AppCompatActivity() {
     private lateinit var toolbar: MaterialToolbar
     private lateinit var tvSambutan: TextView
     private lateinit var tvEmptyProduk: TextView
+    private lateinit var progressProduk: ProgressBar
     private lateinit var etSearch: TextInputEditText
     private lateinit var llKategori: LinearLayout
     private lateinit var rvProduk: RecyclerView
@@ -69,6 +71,7 @@ class UserDashboardActivity : AppCompatActivity() {
         toolbar = findViewById(R.id.toolbar)
         tvSambutan = findViewById(R.id.tvSambutan)
         tvEmptyProduk = findViewById(R.id.tvEmptyProduk)
+        progressProduk = findViewById(R.id.progressProduk)
         etSearch = findViewById(R.id.etSearch)
         llKategori = findViewById(R.id.llKategori)
         rvProduk = findViewById(R.id.rvProduk)
@@ -189,6 +192,8 @@ class UserDashboardActivity : AppCompatActivity() {
     }
 
     private fun loadProduk() {
+        showLoadingProduk(true)
+
         RetrofitClient.instance.getProduk()
             .enqueue(object : Callback<List<Produk>> {
 
@@ -196,6 +201,8 @@ class UserDashboardActivity : AppCompatActivity() {
                     call: Call<List<Produk>>,
                     response: Response<List<Produk>>
                 ) {
+                    showLoadingProduk(false)
+
                     if (response.isSuccessful) {
 
                         fullList = response.body() ?: emptyList()
@@ -207,6 +214,9 @@ class UserDashboardActivity : AppCompatActivity() {
                             "Gagal mengambil produk",
                             Toast.LENGTH_SHORT
                         ).show()
+
+                        fullList = emptyList()
+                        applyFilter()
                     }
                 }
 
@@ -214,13 +224,28 @@ class UserDashboardActivity : AppCompatActivity() {
                     call: Call<List<Produk>>,
                     t: Throwable
                 ) {
+                    showLoadingProduk(false)
+
                     Toast.makeText(
                         this@UserDashboardActivity,
                         "Error: ${t.message}",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    fullList = emptyList()
+                    applyFilter()
                 }
             })
+    }
+
+    private fun showLoadingProduk(isLoading: Boolean) {
+        if (isLoading) {
+            progressProduk.visibility = View.VISIBLE
+            rvProduk.visibility = View.GONE
+            tvEmptyProduk.visibility = View.GONE
+        } else {
+            progressProduk.visibility = View.GONE
+        }
     }
 
     private fun loadKategori() {

@@ -6,7 +6,9 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5">
 
+    <!-- Konten Utama -->
     <LinearLayout
+        android:id="@+id/layoutKontenTransaksiAdmin"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -20,6 +22,7 @@
             android:layout_marginEnd="12dp"
             android:layout_marginBottom="4dp"
             app:cardCornerRadius="12dp"
+            app:cardElevation="3dp"
             app:cardBackgroundColor="#212121">
 
             <LinearLayout
@@ -46,6 +49,7 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
+
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Filter Status -->
@@ -132,6 +136,7 @@
 
     </LinearLayout>
 
+    <!-- Loading Overlay -->
     <LinearLayout
         android:id="@+id/layoutLoadingTransaksiAdmin"
         android:layout_width="match_parent"

@@ -25,6 +25,16 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Loading Produk Admin -->
+    <ProgressBar
+        android:id="@+id/progressProdukAdmin"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
+
     <!-- Empty State Produk Admin -->
     <TextView
         android:id="@+id/tvEmptyProdukAdmin"

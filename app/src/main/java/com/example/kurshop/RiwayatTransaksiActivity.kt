@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,7 @@ import retrofit2.Response
 class RiwayatTransaksiActivity : AppCompatActivity() {
 
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var progressRiwayat: ProgressBar
     private lateinit var tvEmptyRiwayat: TextView
     private lateinit var rvRiwayatTransaksi: RecyclerView
 
@@ -38,6 +40,7 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
         idUser = intent.getIntExtra("id_user", 0)
 
         toolbar = findViewById(R.id.toolbar)
+        progressRiwayat = findViewById(R.id.progressRiwayat)
         tvEmptyRiwayat = findViewById(R.id.tvEmptyRiwayat)
         rvRiwayatTransaksi = findViewById(R.id.rvRiwayatTransaksi)
 
@@ -58,6 +61,8 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
     }
 
     private fun loadRiwayat() {
+        showLoadingRiwayat(true)
+
         RetrofitClient.instance.getTransaksi()
             .enqueue(object : Callback<List<Transaksi>> {
 
@@ -65,6 +70,8 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                     call: Call<List<Transaksi>>,
                     response: Response<List<Transaksi>>
                 ) {
+                    showLoadingRiwayat(false)
+
                     if (response.isSuccessful) {
                         val semuaTransaksi = response.body() ?: emptyList()
 
@@ -87,15 +94,20 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                         rvRiwayatTransaksi.adapter =
                             RiwayatTransaksiAdapter(
                                 listTransaksi = transaksiUser,
+
                                 onClick = { transaksi ->
                                     bukaDetailTransaksi(transaksi)
                                 },
+
                                 onBatalPesanan = { transaksi ->
                                     konfirmasiBatalPesanan(transaksi)
                                 }
                             )
 
                     } else {
+                        tvEmptyRiwayat.visibility = View.VISIBLE
+                        rvRiwayatTransaksi.visibility = View.GONE
+
                         Toast.makeText(
                             this@RiwayatTransaksiActivity,
                             "Gagal mengambil riwayat transaksi",
@@ -108,6 +120,11 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                     call: Call<List<Transaksi>>,
                     t: Throwable
                 ) {
+                    showLoadingRiwayat(false)
+
+                    tvEmptyRiwayat.visibility = View.VISIBLE
+                    rvRiwayatTransaksi.visibility = View.GONE
+
                     Toast.makeText(
                         this@RiwayatTransaksiActivity,
                         "Error: ${t.message}",
@@ -115,6 +132,16 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                     ).show()
                 }
             })
+    }
+
+    private fun showLoadingRiwayat(isLoading: Boolean) {
+        if (isLoading) {
+            progressRiwayat.visibility = View.VISIBLE
+            rvRiwayatTransaksi.visibility = View.GONE
+            tvEmptyRiwayat.visibility = View.GONE
+        } else {
+            progressRiwayat.visibility = View.GONE
+        }
     }
 
     private fun bukaDetailTransaksi(transaksi: Transaksi) {
@@ -172,7 +199,10 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                         if (detailPesanan.isEmpty()) {
                             updateStatusJadiBatal(transaksi)
                         } else {
-                            kembalikanStokProduk(transaksi, detailPesanan)
+                            kembalikanStokProduk(
+                                transaksi = transaksi,
+                                detailPesanan = detailPesanan
+                            )
                         }
 
                     } else {
@@ -247,49 +277,51 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
                                 id_kategori = produk.id_kategori
                             )
 
-                            RetrofitClient.instance.updateProduk(produk.id, request)
-                                .enqueue(object : Callback<Produk> {
+                            RetrofitClient.instance.updateProduk(
+                                produk.id,
+                                request
+                            ).enqueue(object : Callback<Produk> {
 
-                                    override fun onResponse(
-                                        call: Call<Produk>,
-                                        response: Response<Produk>
-                                    ) {
-                                        if (response.isSuccessful) {
-                                            suksesUpdateStok++
+                                override fun onResponse(
+                                    call: Call<Produk>,
+                                    response: Response<Produk>
+                                ) {
+                                    if (response.isSuccessful) {
+                                        suksesUpdateStok++
 
-                                            if (
-                                                suksesUpdateStok == detailDenganProduk.size &&
-                                                !gagalUpdateStok
-                                            ) {
-                                                updateStatusJadiBatal(transaksi)
-                                            }
-
-                                        } else {
-                                            gagalUpdateStok = true
-                                            isProcessingCancel = false
-
-                                            Toast.makeText(
-                                                this@RiwayatTransaksiActivity,
-                                                "Gagal mengembalikan stok produk",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                        if (
+                                            suksesUpdateStok == detailDenganProduk.size &&
+                                            !gagalUpdateStok
+                                        ) {
+                                            updateStatusJadiBatal(transaksi)
                                         }
-                                    }
 
-                                    override fun onFailure(
-                                        call: Call<Produk>,
-                                        t: Throwable
-                                    ) {
+                                    } else {
                                         gagalUpdateStok = true
                                         isProcessingCancel = false
 
                                         Toast.makeText(
                                             this@RiwayatTransaksiActivity,
-                                            "Error stok: ${t.message}",
+                                            "Gagal mengembalikan stok produk",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                })
+                                }
+
+                                override fun onFailure(
+                                    call: Call<Produk>,
+                                    t: Throwable
+                                ) {
+                                    gagalUpdateStok = true
+                                    isProcessingCancel = false
+
+                                    Toast.makeText(
+                                        this@RiwayatTransaksiActivity,
+                                        "Error stok: ${t.message}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            })
                         }
 
                     } else {
@@ -326,45 +358,47 @@ class RiwayatTransaksiActivity : AppCompatActivity() {
             status = "batal"
         )
 
-        RetrofitClient.instance.updateTransaksi(transaksi.id, request)
-            .enqueue(object : Callback<TransaksiResponse> {
+        RetrofitClient.instance.updateTransaksi(
+            transaksi.id,
+            request
+        ).enqueue(object : Callback<TransaksiResponse> {
 
-                override fun onResponse(
-                    call: Call<TransaksiResponse>,
-                    response: Response<TransaksiResponse>
-                ) {
-                    isProcessingCancel = false
+            override fun onResponse(
+                call: Call<TransaksiResponse>,
+                response: Response<TransaksiResponse>
+            ) {
+                isProcessingCancel = false
 
-                    if (response.isSuccessful) {
-                        Toast.makeText(
-                            this@RiwayatTransaksiActivity,
-                            "Pesanan berhasil dibatalkan",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        loadRiwayat()
-
-                    } else {
-                        Toast.makeText(
-                            this@RiwayatTransaksiActivity,
-                            "Gagal membatalkan pesanan",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-
-                override fun onFailure(
-                    call: Call<TransaksiResponse>,
-                    t: Throwable
-                ) {
-                    isProcessingCancel = false
-
+                if (response.isSuccessful) {
                     Toast.makeText(
                         this@RiwayatTransaksiActivity,
-                        "Error batal: ${t.message}",
+                        "Pesanan berhasil dibatalkan",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    loadRiwayat()
+
+                } else {
+                    Toast.makeText(
+                        this@RiwayatTransaksiActivity,
+                        "Gagal membatalkan pesanan",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            })
+            }
+
+            override fun onFailure(
+                call: Call<TransaksiResponse>,
+                t: Throwable
+            ) {
+                isProcessingCancel = false
+
+                Toast.makeText(
+                    this@RiwayatTransaksiActivity,
+                    "Error batal: ${t.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        })
     }
 }
