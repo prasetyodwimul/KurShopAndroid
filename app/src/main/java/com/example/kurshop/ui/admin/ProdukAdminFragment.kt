@@ -3,8 +3,10 @@ package com.example.kurshop.ui.admin
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
-import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -14,23 +16,32 @@ import com.example.kurshop.TambahProdukActivity
 import com.example.kurshop.adapter.ProdukAdminAdapter
 import com.example.kurshop.api.RetrofitClient
 import com.example.kurshop.model.Produk
+import com.google.android.material.textfield.TextInputEditText
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
 
+    private lateinit var etSearchProdukAdmin: TextInputEditText
+    private lateinit var tvEmptyProdukAdmin: TextView
     private lateinit var rvProdukAdmin: RecyclerView
-    private lateinit var layoutLoadingProdukAdmin: LinearLayout
+
+    private var fullListProduk: List<Produk> = emptyList()
+    private var filteredListProduk: List<Produk> = emptyList()
+
+    private var keywordSearch: String = ""
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        etSearchProdukAdmin = view.findViewById(R.id.etSearchProdukAdmin)
+        tvEmptyProdukAdmin = view.findViewById(R.id.tvEmptyProdukAdmin)
         rvProdukAdmin = view.findViewById(R.id.rvProdukAdmin)
-        layoutLoadingProdukAdmin = view.findViewById(R.id.layoutLoadingProdukAdmin)
 
         rvProdukAdmin.layoutManager = GridLayoutManager(requireContext(), 2)
 
+        setupSearch()
         loadProduk()
     }
 
@@ -39,9 +50,33 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
         loadProduk()
     }
 
-    private fun loadProduk() {
-        tampilkanLoading(true)
+    private fun setupSearch() {
+        etSearchProdukAdmin.addTextChangedListener(object : TextWatcher {
 
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                start: Int,
+                before: Int,
+                count: Int
+            ) {
+                keywordSearch = s.toString().trim()
+                applyFilterProduk()
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+        })
+    }
+
+    private fun loadProduk() {
         RetrofitClient.instance.getProduk()
             .enqueue(object : Callback<List<Produk>> {
 
@@ -49,22 +84,15 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     response: Response<List<Produk>>
                 ) {
-                    if (!isAdded) return
-
-                    tampilkanLoading(false)
-
                     if (response.isSuccessful) {
-                        val data = response.body() ?: emptyList()
 
-                        rvProdukAdmin.adapter = ProdukAdminAdapter(
-                            listProduk = data,
-                            onEditProduk = { produk ->
-                                bukaEditProduk(produk)
-                            },
-                            onHapusProduk = { produk ->
-                                konfirmasiHapus(produk)
+                        fullListProduk = response.body()
+                            ?.sortedByDescending {
+                                it.id
                             }
-                        )
+                            ?: emptyList()
+
+                        applyFilterProduk()
 
                     } else {
                         Toast.makeText(
@@ -79,10 +107,6 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<List<Produk>>,
                     t: Throwable
                 ) {
-                    if (!isAdded) return
-
-                    tampilkanLoading(false)
-
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
@@ -92,13 +116,59 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
             })
     }
 
-    private fun tampilkanLoading(sedangLoading: Boolean) {
-        layoutLoadingProdukAdmin.visibility = if (sedangLoading) View.VISIBLE else View.GONE
-        rvProdukAdmin.visibility = if (sedangLoading) View.GONE else View.VISIBLE
+    private fun applyFilterProduk() {
+        filteredListProduk = if (keywordSearch.isEmpty()) {
+
+            fullListProduk
+
+        } else {
+
+            fullListProduk.filter { produk ->
+
+                val cocokNama = produk.nama.contains(
+                    keywordSearch,
+                    ignoreCase = true
+                )
+
+                val cocokDeskripsi = produk.deskripsi.contains(
+                    keywordSearch,
+                    ignoreCase = true
+                )
+
+                cocokNama || cocokDeskripsi
+            }
+        }
+
+        tampilkanProduk()
+    }
+
+    private fun tampilkanProduk() {
+        rvProdukAdmin.adapter = ProdukAdminAdapter(
+            listProduk = filteredListProduk,
+
+            onEditProduk = { produk ->
+                bukaEditProduk(produk)
+            },
+
+            onHapusProduk = { produk ->
+                konfirmasiHapus(produk)
+            }
+        )
+
+        if (filteredListProduk.isEmpty()) {
+            tvEmptyProdukAdmin.visibility = View.VISIBLE
+            rvProdukAdmin.visibility = View.GONE
+        } else {
+            tvEmptyProdukAdmin.visibility = View.GONE
+            rvProdukAdmin.visibility = View.VISIBLE
+        }
     }
 
     private fun bukaEditProduk(produk: Produk) {
-        val intent = Intent(requireContext(), TambahProdukActivity::class.java)
+        val intent = Intent(
+            requireContext(),
+            TambahProdukActivity::class.java
+        )
 
         intent.putExtra("mode", "edit")
         intent.putExtra("id_produk", produk.id)
@@ -106,7 +176,7 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
         intent.putExtra("deskripsi", produk.deskripsi)
         intent.putExtra("harga", produk.harga)
         intent.putExtra("stok", produk.stok)
-        intent.putExtra("foto", produk.foto)
+        intent.putExtra("foto", produk.foto ?: "")
         intent.putExtra("id_kategori", produk.id_kategori)
 
         startActivity(intent)
@@ -131,8 +201,6 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<Void>,
                     response: Response<Void>
                 ) {
-                    if (!isAdded) return
-
                     if (response.isSuccessful) {
                         Toast.makeText(
                             requireContext(),
@@ -155,8 +223,6 @@ class ProdukAdminFragment : Fragment(R.layout.fragment_produk_admin) {
                     call: Call<Void>,
                     t: Throwable
                 ) {
-                    if (!isAdded) return
-
                     Toast.makeText(
                         requireContext(),
                         "Error: ${t.message}",
